@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Application Documents</title>
+</head>
+<body>
+    <h1>Uploaded Documents</h1>
+
+    <p><strong>Scholarship:</strong> {{ application.scholarship.title }}</p>
+    <p><strong>Status:</strong> {{ application.status }}</p>
+
+    <a href="{% url 'my_applications' %}">Back to My Applications</a>
+
+    <hr>
+
+    {% if documents %}
+        {% for document in documents %}
+            <div>
+                <p><strong>Requirement:</strong> {{ document.requirement.name }}</p>
+                <p><a href="{{ document.file.url }}" target="_blank">Open File</a></p>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No documents uploaded yet.</p>
+    {% endif %}
+</body>
+</html>

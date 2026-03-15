@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Announcements</title>
+</head>
+<body>
+    <h1>Announcements</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    {% if announcements %}
+        {% for announcement in announcements %}
+            <div>
+                <h2>{{ announcement.title }}</h2>
+                <p>{{ announcement.body }}</p>
+                <p><strong>Date Posted:</strong> {{ announcement.created_at }}</p>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No announcements available right now.</p>
+    {% endif %}
+</body>
+</html>

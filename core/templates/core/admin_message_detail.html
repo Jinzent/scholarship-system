@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Message Detail</title>
+</head>
+<body>
+    <h1>Message Detail</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'admin_messages' %}">Back to All Messages</a>
+
+    <hr>
+
+    <p><strong>Student:</strong> {{ student_message.student.user.username }}</p>
+    <p><strong>Student Number:</strong> {{ student_message.student.student_number }}</p>
+    <p><strong>Type:</strong> {{ student_message.message_type }}</p>
+    <p><strong>Subject:</strong> {{ student_message.subject }}</p>
+    <p><strong>Body:</strong> {{ student_message.body }}</p>
+    <p><strong>Current Status:</strong> {{ student_message.status }}</p>
+    <p><strong>Date Submitted:</strong> {{ student_message.created_at }}</p>
+
+    {% if student_message.admin_response %}
+        <hr>
+        <h2>Current Admin Response</h2>
+        <p>{{ student_message.admin_response }}</p>
+        <p>
+            <strong>Responded By:</strong>
+            {% if student_message.responded_by %}
+                {{ student_message.responded_by.username }}
+            {% else %}
+                Unknown
+            {% endif %}
+        </p>
+        <p><strong>Responded At:</strong> {{ student_message.responded_at }}</p>
+    {% endif %}
+
+    <hr>
+
+    <h2>Update Status and Response</h2>
+    <form method="post" action="{% url 'update_message_status' student_message.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save Response</button>
+    </form>
+</body>
+</html>

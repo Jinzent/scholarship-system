@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Messages</title>
+</head>
+<body>
+    <h1>My Inquiries and Complaints</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a><br>
+    <a href="{% url 'submit_message' %}">Submit New Message</a>
+
+    <hr>
+
+    {% if student_messages %}
+        {% for item in student_messages %}
+            <div>
+                <h2>{{ item.subject }}</h2>
+                <p><strong>Type:</strong> {{ item.message_type }}</p>
+                <p><strong>Status:</strong> {{ item.status }}</p>
+                <p><strong>Body:</strong> {{ item.body }}</p>
+                <p><strong>Date Submitted:</strong> {{ item.created_at }}</p>
+
+                {% if item.admin_response %}
+                    <p><strong>Admin Response:</strong> {{ item.admin_response }}</p>
+                    <p><strong>Responded At:</strong> {{ item.responded_at }}</p>
+                {% else %}
+                    <p><strong>Admin Response:</strong> No response yet.</p>
+                {% endif %}
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>You have not submitted any messages yet.</p>
+    {% endif %}
+</body>
+</html>

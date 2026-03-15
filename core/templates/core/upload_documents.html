@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Documents</title>
+</head>
+<body>
+    <h1>Upload Documents</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <p><strong>Scholarship:</strong> {{ application.scholarship.title }}</p>
+    <p><strong>Status:</strong> {{ application.status }}</p>
+
+    <a href="{% url 'my_applications' %}">Back to My Applications</a>
+
+    <hr>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {% for requirement in requirements %}
+            <div>
+                <p><strong>{{ requirement.name }}</strong></p>
+                <input type="file" name="requirement_{{ requirement.id }}">
+            </div>
+            <hr>
+        {% empty %}
+            <p>No requirements found for this scholarship.</p>
+        {% endfor %}
+
+        <button type="submit">Save Documents</button>
+    </form>
+</body>
+</html>

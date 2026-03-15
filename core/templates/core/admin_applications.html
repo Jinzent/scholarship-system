@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Applications</title>
+</head>
+<body>
+    <h1>All Scholarship Applications</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <form method="get">
+        <label for="search">Search Student:</label>
+        <input type="text" id="search" name="search" value="{{ search }}" placeholder="Username or student number">
+
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="">All</option>
+            <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Approved" {% if selected_status == 'Approved' %}selected{% endif %}>Approved</option>
+            <option value="Rejected" {% if selected_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+            <option value="Claimed" {% if selected_status == 'Claimed' %}selected{% endif %}>Claimed</option>
+        </select>
+
+        <label for="scholarship">Scholarship:</label>
+        <select id="scholarship" name="scholarship">
+            <option value="">All</option>
+            {% for scholarship in scholarships %}
+                <option value="{{ scholarship.id }}" {% if selected_scholarship == scholarship.id|stringformat:"s" %}selected{% endif %}>
+                    {{ scholarship.title }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <label for="completeness">Documents:</label>
+        <select id="completeness" name="completeness">
+            <option value="">All</option>
+            <option value="complete" {% if selected_completeness == 'complete' %}selected{% endif %}>Complete</option>
+            <option value="incomplete" {% if selected_completeness == 'incomplete' %}selected{% endif %}>Incomplete</option>
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <hr>
+
+    {% if applications %}
+        {% for application in applications %}
+            <div>
+                <h2>{{ application.scholarship.title }}</h2>
+                <p><strong>Student:</strong> {{ application.student.user.username }}</p>
+                <p><strong>Student Number:</strong> {{ application.student.student_number }}</p>
+                <p><strong>Status:</strong> {{ application.status }}</p>
+                <p><strong>Date Applied:</strong> {{ application.applied_at }}</p>
+                <p><strong>Documents:</strong> {{ application.uploaded_requirements_count }} / {{ application.total_requirements }}</p>
+
+                {% if application.is_complete %}
+                    <p><strong>Document Status:</strong> Complete</p>
+                {% else %}
+                    <p><strong>Document Status:</strong> Incomplete</p>
+                {% endif %}
+
+                <a href="{% url 'admin_application_detail' application.id %}">Review Application</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No applications matched your filter.</p>
+    {% endif %}
+</body>
+</html>

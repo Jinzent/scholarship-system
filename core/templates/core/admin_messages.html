@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Messages</title>
+</head>
+<body>
+    <h1>All Student Messages</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <form method="get">
+        <label for="search">Search:</label>
+        <input type="text" id="search" name="search" value="{{ search }}" placeholder="Username, student number, or subject">
+
+        <label for="message_type">Type:</label>
+        <select id="message_type" name="message_type">
+            <option value="">All</option>
+            <option value="Inquiry" {% if selected_type == 'Inquiry' %}selected{% endif %}>Inquiry</option>
+            <option value="Complaint" {% if selected_type == 'Complaint' %}selected{% endif %}>Complaint</option>
+        </select>
+
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="">All</option>
+            <option value="Pending" {% if selected_status == 'Pending' %}selected{% endif %}>Pending</option>
+            <option value="Resolved" {% if selected_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <hr>
+
+    {% if student_messages %}
+        {% for item in student_messages %}
+            <div>
+                <h2>{{ item.subject }}</h2>
+                <p><strong>Student:</strong> {{ item.student.user.username }}</p>
+                <p><strong>Student Number:</strong> {{ item.student.student_number }}</p>
+                <p><strong>Type:</strong> {{ item.message_type }}</p>
+                <p><strong>Status:</strong> {{ item.status }}</p>
+                <p><strong>Date Submitted:</strong> {{ item.created_at }}</p>
+                <a href="{% url 'admin_message_detail' item.id %}">View Details</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No messages matched your filter.</p>
+    {% endif %}
+</body>
+</html>

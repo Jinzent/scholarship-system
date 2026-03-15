@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ request.user.username }}</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    {% if profile %}
+        <h2>Your Profile</h2>
+        <p><strong>Student Number:</strong> {{ profile.student_number }}</p>
+        <p><strong>Course:</strong> {{ profile.course }}</p>
+        <p><strong>Year Level:</strong> {{ profile.year_level }}</p>
+        <p><strong>GPA:</strong> {{ profile.gpa }}</p>
+        <p><strong>Contact Number:</strong> {{ profile.contact_number }}</p>
+        <p><strong>Address:</strong> {{ profile.address }}</p>
+    {% else %}
+        <p>No student profile is linked to this account.</p>
+    {% endif %}
+
+    <hr>
+
+    <a href="{% url 'scholarship_list' %}">View Scholarships</a><br>
+    <a href="{% url 'announcements_list' %}">Announcements</a><br>
+
+    {% if profile %}
+        <a href="{% url 'my_applications' %}">My Applications</a><br>
+        {% if profile %}
+        <a href="{% url 'my_notifications' %}">My Notifications</a><br>
+        <a href="{% url 'my_messages' %}">My Inquiries</a><br>
+        <a href="{% url 'submit_message' %}">Submit Inquiry</a><br>
+        <a href="{% url 'recommended_scholarships' %}">Recommended Scholarships</a><br>
+
+{% endif %}
+
+    {% endif %}
+
+    {% if request.user.is_staff %}
+        <a href="{% url 'admin_applications' %}">Review Student Applications</a><br>
+        <a href="{% url 'reports_dashboard' %}">Reports Dashboard</a><br>
+        {% if request.user.is_staff %}
+        <a href="{% url 'admin_messages' %}">Review Student Messages</a><br>
+        <a href="{% url 'admin_announcements' %}">Manage Announcements</a><br>
+{% endif %}
+
+    {% endif %}
+
+    <hr>
+
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>

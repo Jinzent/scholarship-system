@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recommended Scholarships</title>
+</head>
+<body>
+    <h1>Recommended Scholarships</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <p><strong>Your GPA:</strong> {{ profile.gpa }}</p>
+
+    {% if recommendations %}
+        {% for item in recommendations %}
+            <div>
+                <h2>{{ item.scholarship.title }}</h2>
+                <p><strong>Description:</strong> {{ item.scholarship.description }}</p>
+                <p><strong>Minimum GPA:</strong> {{ item.scholarship.min_gpa }}</p>
+                <p><strong>Deadline:</strong> {{ item.scholarship.deadline }}</p>
+
+                <p><strong>Why this is recommended:</strong></p>
+                <ul>
+                    {% for reason in item.reasons %}
+                        <li>{{ reason }}</li>
+                    {% endfor %}
+                </ul>
+
+                <a href="{% url 'scholarship_detail' item.scholarship.id %}">View Details</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No scholarship recommendations are available for your current profile.</p>
+    {% endif %}
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scholarships</title>
+</head>
+<body>
+    <h1>Available Scholarships</h1>
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <form method="get">
+        <label for="keyword">Search Title:</label>
+        <input type="text" id="keyword" name="keyword" value="{{ keyword }}">
+
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="">All</option>
+            <option value="open" {% if status == 'open' %}selected{% endif %}>Open</option>
+            <option value="closed" {% if status == 'closed' %}selected{% endif %}>Closed</option>
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <hr>
+
+    <p>Total scholarships: {{ scholarships|length }}</p>
+
+    {% for scholarship in scholarships %}
+        <div>
+            <h2>{{ scholarship.title }}</h2>
+            <p><strong>Minimum GPA:</strong> {{ scholarship.min_gpa }}</p>
+            <p><strong>Deadline:</strong> {{ scholarship.deadline }}</p>
+
+            {% if scholarship.is_open %}
+                <p><strong>Status:</strong> Open</p>
+            {% else %}
+                <p><strong>Status:</strong> Closed</p>
+            {% endif %}
+
+            <a href="{% url 'scholarship_detail' scholarship.id %}">View Details</a>
+        </div>
+        <hr>
+    {% empty %}
+        <p>No scholarships matched your filter.</p>
+    {% endfor %}
+</body>
+</html>

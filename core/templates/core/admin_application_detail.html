@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Application</title>
+</head>
+<body>
+    <h1>Review Application</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'admin_applications' %}">Back to All Applications</a>
+
+    <hr>
+
+    <h2>Student Information</h2>
+    <p><strong>Username:</strong> {{ application.student.user.username }}</p>
+    <p><strong>Student Number:</strong> {{ application.student.student_number }}</p>
+    <p><strong>Course:</strong> {{ application.student.course }}</p>
+    <p><strong>Year Level:</strong> {{ application.student.year_level }}</p>
+    <p><strong>GPA:</strong> {{ application.student.gpa }}</p>
+    <p><strong>Contact Number:</strong> {{ application.student.contact_number }}</p>
+    <p><strong>Address:</strong> {{ application.student.address }}</p>
+
+    <hr>
+
+    <h2>Scholarship Information</h2>
+    <p><strong>Scholarship:</strong> {{ application.scholarship.title }}</p>
+    <p><strong>Description:</strong> {{ application.scholarship.description }}</p>
+    <p><strong>Current Status:</strong> {{ application.status }}</p>
+    <p><strong>Date Applied:</strong> {{ application.applied_at }}</p>
+    <p><strong>Documents Uploaded:</strong> {{ application.uploaded_requirements_count }} / {{ application.total_requirements }}</p>
+
+    {% if application.is_complete %}
+        <p><strong>Document Status:</strong> Complete</p>
+    {% else %}
+        <p><strong>Document Status:</strong> Incomplete</p>
+        <p><strong>Missing Requirements:</strong></p>
+        <ul>
+            {% for requirement in application.missing_requirements %}
+                <li>{{ requirement.name }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <hr>
+
+    <h2>Uploaded Documents</h2>
+    {% if documents %}
+        <ul>
+            {% for document in documents %}
+                <li>
+                    {{ document.requirement.name }} -
+                    <a href="{{ document.file.url }}" target="_blank">Open File</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No documents uploaded yet.</p>
+    {% endif %}
+
+    <hr>
+
+<h2>Status History</h2>
+{% if history %}
+    <ul>
+        {% for item in history %}
+            <li>
+                {{ item.changed_at }} -
+                {{ item.old_status }} → {{ item.new_status }}
+                {% if item.changed_by %}
+                    by {{ item.changed_by.username }}
+                {% else %}
+                    by Unknown User
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No status changes recorded yet.</p>
+{% endif %}
+
+    <hr>
+
+    <h2>Update Status</h2>
+    <form method="post" action="{% url 'update_application_status' application.id %}">
+        {% csrf_token %}
+        <select name="status">
+            {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if application.status == value %}selected{% endif %}>
+                    {{ label }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Update Status</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Applications</title>
+</head>
+<body>
+    <h1>My Scholarship Applications</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    {% if applications %}
+        {% for application in applications %}
+            <div>
+                <h2>{{ application.scholarship.title }}</h2>
+                <p><strong>Status:</strong> {{ application.status }}</p>
+                <p><strong>Date Applied:</strong> {{ application.applied_at }}</p>
+                <p><strong>Documents Uploaded:</strong> {{ application.uploaded_requirements_count }} / {{ application.total_requirements }}</p>
+
+                {% if application.is_complete %}
+                    <p><strong>Document Status:</strong> Complete</p>
+                {% else %}
+                    <p><strong>Document Status:</strong> Incomplete</p>
+                    <p><strong>Missing:</strong></p>
+                    <ul>
+                        {% for requirement in application.missing_requirements %}
+                            <li>{{ requirement.name }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <a href="{% url 'upload_documents' application.id %}">Upload Documents</a><br>
+                <a href="{% url 'application_documents' application.id %}">View Uploaded Documents</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>You have not applied to any scholarships yet.</p>
+    {% endif %}
+</body>
+</html>

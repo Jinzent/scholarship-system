@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ scholarship.title }}</title>
+</head>
+<body>
+    <h1>{{ scholarship.title }}</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <p><strong>Description:</strong> {{ scholarship.description }}</p>
+    <p><strong>Minimum GPA:</strong> {{ scholarship.min_gpa }}</p>
+    <p><strong>Deadline:</strong> {{ scholarship.deadline }}</p>
+
+    {% if scholarship.is_open %}
+        <p><strong>Status:</strong> Open</p>
+    {% else %}
+        <p><strong>Status:</strong> Closed</p>
+    {% endif %}
+
+    <h2>Requirements</h2>
+    <ul>
+        {% for requirement in scholarship.requirements.all %}
+            <li>{{ requirement.name }}</li>
+        {% empty %}
+            <li>No requirements added yet.</li>
+        {% endfor %}
+    </ul>
+
+    {% if scholarship.is_open %}
+        <form method="post" action="{% url 'apply_scholarship' scholarship.id %}">
+            {% csrf_token %}
+            <button type="submit">Apply Now</button>
+        </form>
+    {% else %}
+        <p><strong>This scholarship is closed. Applications are no longer accepted.</strong></p>
+    {% endif %}
+
+    <br>
+    <a href="{% url 'scholarship_list' %}">Back to Scholarship List</a>
+</body>
+</html>

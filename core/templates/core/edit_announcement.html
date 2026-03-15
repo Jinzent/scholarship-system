@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Announcement</title>
+</head>
+<body>
+    <h1>Edit Announcement</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'admin_announcements' %}">Back to Manage Announcements</a>
+
+    <hr>
+
+    <p><strong>Editing:</strong> {{ announcement.title }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Announcement</button>
+    </form>
+</body>
+</html>

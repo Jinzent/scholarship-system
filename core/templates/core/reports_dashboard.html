@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reports Dashboard</title>
+</head>
+<body>
+    <h1>Reports Dashboard</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a>
+
+    <hr>
+
+    <p><strong>Total Applications:</strong> {{ total_applications }}</p>
+    <p><strong>Pending:</strong> {{ pending_count }}</p>
+    <p><strong>Approved:</strong> {{ approved_count }}</p>
+    <p><strong>Rejected:</strong> {{ rejected_count }}</p>
+    <p><strong>Claimed:</strong> {{ claimed_count }}</p>
+    <p><strong>Complete Documents:</strong> {{ complete_count }}</p>
+    <p><strong>Incomplete Documents:</strong> {{ incomplete_count }}</p>
+
+    <hr>
+
+    <h2>Export Filtered CSV</h2>
+    <form method="get" action="{% url 'export_applications_csv' %}">
+        <label for="search">Search Student:</label>
+        <input type="text" id="search" name="search">
+
+        <label for="status">Status:</label>
+        <select id="status" name="status">
+            <option value="">All</option>
+            <option value="Pending">Pending</option>
+            <option value="Approved">Approved</option>
+            <option value="Rejected">Rejected</option>
+            <option value="Claimed">Claimed</option>
+        </select>
+
+        <label for="scholarship">Scholarship:</label>
+        <select id="scholarship" name="scholarship">
+            <option value="">All</option>
+            {% for scholarship in scholarships %}
+                <option value="{{ scholarship.id }}">{{ scholarship.title }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="completeness">Documents:</label>
+        <select id="completeness" name="completeness">
+            <option value="">All</option>
+            <option value="complete">Complete</option>
+            <option value="incomplete">Incomplete</option>
+        </select>
+
+        <button type="submit">Download CSV</button>
+    </form>
+</body>
+</html>

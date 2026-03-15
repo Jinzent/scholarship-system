@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Announcements</title>
+</head>
+<body>
+    <h1>Manage Announcements</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a><br>
+    <a href="{% url 'create_announcement' %}">Create New Announcement</a>
+
+    <hr>
+
+    {% if announcements %}
+        {% for announcement in announcements %}
+            <div>
+                <h2>{{ announcement.title }}</h2>
+                <p>{{ announcement.body }}</p>
+                <p><strong>Active:</strong> {% if announcement.is_active %}Yes{% else %}No{% endif %}</p>
+                <p>
+                    <strong>Created By:</strong>
+                    {% if announcement.created_by %}
+                        {{ announcement.created_by.username }}
+                    {% else %}
+                        Unknown
+                    {% endif %}
+                </p>
+                <p><strong>Date Posted:</strong> {{ announcement.created_at }}</p>
+
+                <a href="{% url 'edit_announcement' announcement.id %}">Edit Announcement</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+    <p>No announcements created yet.</p>
+    {% endif %}
+</body>
+</html>
