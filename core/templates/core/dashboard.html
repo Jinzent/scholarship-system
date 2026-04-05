@@ -20,8 +20,28 @@
         <p><strong>GPA:</strong> {{ profile.gpa }}</p>
         <p><strong>Contact Number:</strong> {{ profile.contact_number }}</p>
         <p><strong>Address:</strong> {{ profile.address }}</p>
+
+        <hr>
+
+        <h2>Student Summary</h2>
+        <p><strong>Total Applications:</strong> {{ student_metrics.total_applications }}</p>
+        <p><strong>Approved Applications:</strong> {{ student_metrics.approved_applications }}</p>
+        <p><strong>Pending Applications:</strong> {{ student_metrics.pending_applications }}</p>
+        <p><strong>Unread Notifications:</strong> {{ student_metrics.unread_notifications }}</p>
+        <p><strong>Pending Messages:</strong> {{ student_metrics.pending_messages }}</p>
     {% else %}
         <p>No student profile is linked to this account.</p>
+    {% endif %}
+
+    {% if request.user.is_staff %}
+        <hr>
+
+        <h2>Admin Summary</h2>
+        <p><strong>Total Applications:</strong> {{ admin_metrics.total_applications }}</p>
+        <p><strong>Pending Applications:</strong> {{ admin_metrics.pending_applications }}</p>
+        <p><strong>Unresolved Messages:</strong> {{ admin_metrics.unresolved_messages }}</p>
+        <p><strong>Active Scholarships:</strong> {{ admin_metrics.active_scholarships }}</p>
+        <p><strong>Active Announcements:</strong> {{ admin_metrics.active_announcements }}</p>
     {% endif %}
 
     <hr>
@@ -30,25 +50,20 @@
     <a href="{% url 'announcements_list' %}">Announcements</a><br>
 
     {% if profile %}
+        <a href="{% url 'edit_profile' %}">Edit Profile</a><br>
         <a href="{% url 'my_applications' %}">My Applications</a><br>
-        {% if profile %}
-        <a href="{% url 'my_notifications' %}">My Notifications</a><br>
-        <a href="{% url 'my_messages' %}">My Inquiries</a><br>
-        <a href="{% url 'submit_message' %}">Submit Inquiry</a><br>
         <a href="{% url 'recommended_scholarships' %}">Recommended Scholarships</a><br>
-
-{% endif %}
-
+        <a href="{% url 'my_notifications' %}">My Notifications</a><br>
+        <a href="{% url 'my_messages' %}">My Inquiries / Complaints</a><br>
+        <a href="{% url 'submit_message' %}">Submit Inquiry / Complaint</a><br>
     {% endif %}
 
     {% if request.user.is_staff %}
         <a href="{% url 'admin_applications' %}">Review Student Applications</a><br>
         <a href="{% url 'reports_dashboard' %}">Reports Dashboard</a><br>
-        {% if request.user.is_staff %}
         <a href="{% url 'admin_messages' %}">Review Student Messages</a><br>
         <a href="{% url 'admin_announcements' %}">Manage Announcements</a><br>
-{% endif %}
-
+        <a href="{% url 'admin_scholarships' %}">Manage Scholarships</a><br>
     {% endif %}
 
     <hr>

@@ -7,8 +7,8 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from .forms import StudentRegisterForm, StudentProfileForm, UploadedDocumentForm, StudentMessage, StudentMessageForm, AdminMessageResponseForm, AnnouncementForm
-from .models import Notification, StudentProfile, Scholarship, Application, UploadedDocument, ApplicationStatusHistory, StudentMessage, Announcement
+from .forms import StudentRegisterForm, StudentProfileForm, UploadedDocumentForm, StudentMessage, StudentMessageForm, AdminMessageResponseForm, AnnouncementForm, ScholarshipForm, RequirementForm
+from .models import Notification, Requirement, StudentProfile, Scholarship, Application, UploadedDocument, ApplicationStatusHistory, StudentMessage, Announcement
 
 def admin_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -51,11 +51,44 @@ def register(request):
 
 
 # Students Views
-
 @login_required
 def dashboard(request):
     profile = StudentProfile.objects.filter(user=request.user).first()
-    return render(request, 'core/dashboard.html', {'profile': profile})
+
+    student_metrics = None
+    admin_metrics = None
+
+    if profile:
+        student_applications = profile.applications.all()
+        student_messages = profile.messages.all()
+        student_notifications = profile.notifications.all()
+
+        student_metrics = {
+            'total_applications': student_applications.count(),
+            'approved_applications': student_applications.filter(status='Approved').count(),
+            'pending_applications': student_applications.filter(status='Pending').count(),
+            'unread_notifications': student_notifications.filter(is_read=False).count(),
+            'pending_messages': student_messages.filter(status='Pending').count(),
+        }
+
+    if request.user.is_staff:
+        all_applications = Application.objects.all()
+        all_messages = StudentMessage.objects.all()
+
+        admin_metrics = {
+            'total_applications': all_applications.count(),
+            'pending_applications': all_applications.filter(status='Pending').count(),
+            'unresolved_messages': all_messages.filter(status='Pending').count(),
+            'active_scholarships': Scholarship.objects.filter(deadline__gte=timezone.localdate()).count(),
+            'active_announcements': Announcement.objects.filter(is_active=True).count(),
+        }
+
+    return render(request, 'core/dashboard.html', {
+        'profile': profile,
+        'student_metrics': student_metrics,
+        'admin_metrics': admin_metrics,
+    })
+
 
 @login_required
 def scholarship_list(request):
@@ -136,8 +169,17 @@ def my_applications(request):
 
 @login_required
 def upload_documents(request, application_id):
-    profile = get_object_or_404(StudentProfile, user=request.user)
+    profile = StudentProfile.objects.filter(user=request.user).first()
+
+    if not profile:
+        messages.error(request, 'No student profile is linked to this account.')
+        return redirect('dashboard')
+
     application = get_object_or_404(Application, id=application_id, student=profile)
+
+    if not application.can_upload_documents():
+        messages.error(request, 'Documents can only be uploaded while the application is still pending.')
+        return redirect('application_detail', application_id=application.id)
 
     requirements = application.scholarship.requirements.all()
 
@@ -162,18 +204,14 @@ def upload_documents(request, application_id):
                     )
 
         messages.success(request, 'Documents uploaded successfully.')
-        return redirect('my_applications')
+        return redirect('application_detail', application_id=application.id)
 
     uploaded_documents = UploadedDocument.objects.filter(application=application)
-
-    uploaded_map = {}
-    for doc in uploaded_documents:
-        uploaded_map[doc.requirement_id] = doc
 
     return render(request, 'core/upload_documents.html', {
         'application': application,
         'requirements': requirements,
-        'uploaded_map': uploaded_map,
+        'uploaded_documents': uploaded_documents,
     })
 
 
@@ -189,8 +227,144 @@ def application_documents(request, application_id):
     })
 
 
-# Admin Views
+# Edit student profile Views
+@login_required
+def edit_profile(request):
+    profile = StudentProfile.objects.filter(user=request.user).first()
 
+    if not profile:
+        messages.error(request, 'No student profile is linked to this account.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        form = StudentProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('dashboard')
+    else:
+        form = StudentProfileForm(instance=profile)
+
+    return render(request, 'core/edit_profile.html', {
+        'form': form,
+        'profile': profile,
+    })
+
+
+# Application Detail Views for Students
+@login_required
+def application_detail(request, application_id):
+    profile = StudentProfile.objects.filter(user=request.user).first()
+
+    if not profile:
+        messages.error(request, 'No student profile is linked to this account.')
+        return redirect('dashboard')
+
+    application = get_object_or_404(
+        Application.objects.select_related('scholarship'),
+        id=application_id,
+        student=profile
+    )
+
+    documents = UploadedDocument.objects.filter(application=application)
+    history = application.status_history.select_related('changed_by').order_by('-changed_at')
+
+    return render(request, 'core/application_detail.html', {
+        'application': application,
+        'documents': documents,
+        'history': history,
+    })
+
+
+# Withraw application Views
+@login_required
+def withdraw_application(request, application_id):
+    profile = StudentProfile.objects.filter(user=request.user).first()
+
+    if not profile:
+        messages.error(request, 'No student profile is linked to this account.')
+        return redirect('dashboard')
+
+    application = get_object_or_404(
+        Application,
+        id=application_id,
+        student=profile
+    )
+
+    if request.method != 'POST':
+        return redirect('application_detail', application_id=application.id)
+
+    if not application.can_withdraw():
+        messages.error(request, 'This application can no longer be withdrawn.')
+        return redirect('application_detail', application_id=application.id)
+
+    old_status = application.status
+    application.status = 'Withdrawn'
+    application.save()
+
+    application.create_requirement_snapshot()
+
+    ApplicationStatusHistory.objects.create(
+        application=application,
+        old_status=old_status,
+        new_status='Withdrawn',
+        changed_by=request.user
+    )
+
+    Notification.objects.create(
+        student=application.student,
+        title='Application Withdrawn',
+        message=f'You withdrew your application for "{application.scholarship.title}".'
+    )
+
+    messages.success(request, 'Application withdrawn successfully.')
+    return redirect('my_applications')
+
+
+# Reapply application Views
+@login_required
+def reapply_application(request, application_id):
+    profile = StudentProfile.objects.filter(user=request.user).first()
+
+    if not profile:
+        messages.error(request, 'No student profile is linked to this account.')
+        return redirect('dashboard')
+
+    application = get_object_or_404(
+        Application,
+        id=application_id,
+        student=profile
+    )
+
+    if request.method != 'POST':
+        return redirect('application_detail', application_id=application.id)
+
+    if not application.can_reapply():
+        messages.error(request, 'This application cannot be reapplied.')
+        return redirect('application_detail', application_id=application.id)
+
+    old_status = application.status
+    application.status = 'Pending'
+    application.save()
+
+    ApplicationStatusHistory.objects.create(
+        application=application,
+        old_status=old_status,
+        new_status='Pending',
+        changed_by=request.user
+    )
+
+    Notification.objects.create(
+        student=application.student,
+        title='Application Reapplied',
+        message=f'You reapplied for "{application.scholarship.title}". Your application is now pending again.'
+    )
+
+    messages.success(request, 'Application reapplied successfully.')
+    return redirect('application_detail', application_id=application.id)
+
+
+# Admin Views
 @admin_required
 def admin_applications(request):
     applications = Application.objects.select_related(
@@ -249,7 +423,10 @@ def admin_application_detail(request, application_id):
         'application': application,
         'documents': documents,
         'history': history,
-        'status_choices': Application.STATUS_CHOICES,
+        'status_choices': [
+            choice for choice in Application.STATUS_CHOICES
+            if choice[0] != 'Withdrawn'
+        ],
     })
 
 
@@ -258,6 +435,10 @@ def update_application_status(request, application_id):
     application = get_object_or_404(Application, id=application_id)
 
     if request.method == 'POST':
+        if application.status == 'Withdrawn':
+            messages.error(request, 'Withdrawn applications cannot be updated.')
+            return redirect('admin_application_detail', application_id=application.id)
+
         new_status = request.POST.get('status')
         valid_statuses = [choice[0] for choice in Application.STATUS_CHOICES]
 
@@ -271,6 +452,9 @@ def update_application_status(request, application_id):
             if old_status != new_status:
                 application.status = new_status
                 application.save()
+
+                if new_status in ['Approved', 'Rejected', 'Claimed']:
+                    application.create_requirement_snapshot()
 
                 ApplicationStatusHistory.objects.create(
                     application=application,
@@ -607,3 +791,132 @@ def edit_announcement(request, announcement_id):
         'form': form,
         'announcement': announcement,
     })
+
+
+# Admin Scholarship Management Views
+@admin_required
+def admin_scholarships(request):
+    scholarships = Scholarship.objects.all().order_by('deadline')
+
+    keyword = request.GET.get('keyword', '').strip()
+
+    if keyword:
+        scholarships = scholarships.filter(title__icontains=keyword)
+
+    return render(request, 'core/admin_scholarships.html', {
+        'scholarships': scholarships,
+        'keyword': keyword,
+    })
+
+
+@admin_required
+def create_scholarship(request):
+    if request.method == 'POST':
+        form = ScholarshipForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Scholarship created successfully.')
+            return redirect('admin_scholarships')
+    else:
+        form = ScholarshipForm()
+
+    return render(request, 'core/create_scholarship.html', {
+        'form': form
+    })
+
+
+@admin_required
+def edit_scholarship(request, scholarship_id):
+    scholarship = get_object_or_404(Scholarship, id=scholarship_id)
+
+    if request.method == 'POST':
+        form = ScholarshipForm(request.POST, instance=scholarship)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Scholarship updated successfully.')
+            return redirect('admin_scholarships')
+    else:
+        form = ScholarshipForm(instance=scholarship)
+
+    return render(request, 'core/edit_scholarship.html', {
+        'form': form,
+        'scholarship': scholarship,
+    })
+
+
+# Requirements
+@admin_required
+def manage_requirements(request, scholarship_id):
+    scholarship = get_object_or_404(Scholarship, id=scholarship_id)
+    requirements = scholarship.requirements.all().order_by('name')
+
+    form = RequirementForm()
+
+    return render(request, 'core/manage_requirements.html', {
+        'scholarship': scholarship,
+        'requirements': requirements,
+        'form': form,
+    })
+
+
+@admin_required
+def add_requirement(request, scholarship_id):
+    scholarship = get_object_or_404(Scholarship, id=scholarship_id)
+
+    if request.method == 'POST':
+        form = RequirementForm(request.POST)
+        if form.is_valid():
+            requirement = form.save(commit=False)
+            requirement.scholarship = scholarship
+            requirement.save()
+
+            pending_applications = Application.objects.filter(
+                scholarship=scholarship,
+                status='Pending'
+            ).select_related('student')
+
+            for application in pending_applications:
+                Notification.objects.create(
+                    student=application.student,
+                    title='Scholarship Requirement Updated',
+                    message=(
+                        f'A new requirement "{requirement.name}" was added to '
+                        f'"{scholarship.title}". Please review your application and upload it if needed.'
+                    )
+                )
+
+            messages.success(request, 'Requirement added successfully.')
+        else:
+            messages.error(request, 'Failed to add requirement.')
+
+    return redirect('manage_requirements', scholarship_id=scholarship.id)
+
+
+@admin_required
+def delete_requirement(request, requirement_id):
+    requirement = get_object_or_404(Requirement, id=requirement_id)
+    scholarship = requirement.scholarship
+    scholarship_id = scholarship.id
+    requirement_name = requirement.name
+
+    if request.method == 'POST':
+        pending_applications = Application.objects.filter(
+            scholarship=scholarship,
+            status='Pending'
+        ).select_related('student')
+
+        for application in pending_applications:
+            Notification.objects.create(
+                student=application.student,
+                title='Scholarship Requirement Updated',
+                message=(
+                    f'The requirement "{requirement_name}" was removed from '
+                    f'"{scholarship.title}". Please review your application requirements.'
+                )
+            )
+
+        requirement.delete()
+        messages.success(request, 'Requirement deleted successfully.')
+
+    return redirect('manage_requirements', scholarship_id=scholarship_id)
+

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Scholarships</title>
+</head>
+<body>
+    <h1>Manage Scholarships</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'dashboard' %}">Back to Dashboard</a><br>
+    <a href="{% url 'create_scholarship' %}">Create Scholarship</a>
+
+    <hr>
+
+    <form method="get">
+        <label for="keyword">Search Title:</label>
+        <input type="text" id="keyword" name="keyword" value="{{ keyword }}">
+        <button type="submit">Search</button>
+    </form>
+
+    <hr>
+
+    {% if scholarships %}
+        {% for scholarship in scholarships %}
+            <div>
+                <h2>{{ scholarship.title }}</h2>
+                <p><strong>Description:</strong> {{ scholarship.description }}</p>
+                <p><strong>Minimum GPA:</strong> {{ scholarship.min_gpa }}</p>
+                <p><strong>Deadline:</strong> {{ scholarship.deadline }}</p>
+
+                {% if scholarship.is_open %}
+                    <p><strong>Status:</strong> Open</p>
+                {% else %}
+                    <p><strong>Status:</strong> Closed</p>
+                {% endif %}
+
+                <a href="{% url 'edit_scholarship' scholarship.id %}">Edit Scholarship</a><br>
+                <a href="{% url 'manage_requirements' scholarship.id %}">Manage Requirements</a>
+            </div>
+            <hr>
+        {% endfor %}
+    {% else %}
+        <p>No scholarships found.</p>
+    {% endif %}
+</body>
+</html>

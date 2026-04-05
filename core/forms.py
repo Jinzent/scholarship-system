@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import StudentProfile
-from .models import UploadedDocument, StudentMessage, Announcement
+from .models import UploadedDocument, StudentMessage, Announcement, Scholarship, StudentProfile, Requirement
 
 
 
@@ -49,3 +48,15 @@ class AnnouncementForm(forms.ModelForm):
     class Meta:
         model = Announcement
         fields = ['title', 'body', 'is_active']
+
+
+class ScholarshipForm(forms.ModelForm):
+    class Meta:
+        model = Scholarship
+        fields = ['title', 'description', 'min_gpa', 'deadline']
+
+
+class RequirementForm(forms.ModelForm):
+    class Meta:
+        model = Requirement
+        fields = ['name']

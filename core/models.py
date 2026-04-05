@@ -77,6 +77,7 @@ class Application(models.Model):
         ('Approved', 'Approved'),
         ('Rejected', 'Rejected'),
         ('Claimed', 'Claimed'),
+        ('Withdrawn', 'Withdrawn'),
     ]
 
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='applications')
@@ -87,21 +88,64 @@ class Application(models.Model):
     def __str__(self):
         return f"{self.student.user.username} - {self.scholarship.title}"
 
+    def can_withdraw(self):
+        return self.status == 'Pending'
+
+    def is_withdrawn(self):
+        return self.status == 'Withdrawn'
+
+    def can_upload_documents(self):
+        return self.status == 'Pending'
+
+    def can_reapply(self):
+        return self.status == 'Withdrawn'
+
+    def active_requirements(self):
+        if self.status == 'Pending':
+            return list(self.scholarship.requirements.all())
+        return list(self.requirement_snapshots.all())
+
     def total_requirements(self):
-        return self.scholarship.requirements.count()
+        return len(self.active_requirements())
 
     def uploaded_requirements_count(self):
-        return self.documents.count()
+        active_names = {req.name if hasattr(req, 'name') else req.requirement_name for req in self.active_requirements()}
+        uploaded_names = set(
+            self.documents.values_list('requirement__name', flat=True)
+        )
+        return len(active_names.intersection(uploaded_names))
 
     def is_complete(self):
-        required_ids = set(self.scholarship.requirements.values_list('id', flat=True))
-        uploaded_ids = set(self.documents.values_list('requirement_id', flat=True))
-        return required_ids.issubset(uploaded_ids)
+        active_names = {req.name if hasattr(req, 'name') else req.requirement_name for req in self.active_requirements()}
+        uploaded_names = set(
+            self.documents.values_list('requirement__name', flat=True)
+        )
+        return active_names.issubset(uploaded_names)
 
     def missing_requirements(self):
-        required = self.scholarship.requirements.all()
-        uploaded_ids = set(self.documents.values_list('requirement_id', flat=True))
-        return [req for req in required if req.id not in uploaded_ids]
+        uploaded_names = set(
+            self.documents.values_list('requirement__name', flat=True)
+        )
+
+        missing = []
+        for req in self.active_requirements():
+            req_name = req.name if hasattr(req, 'name') else req.requirement_name
+            if req_name not in uploaded_names:
+                missing.append(req_name)
+        return missing
+
+    def has_snapshot(self):
+        return self.requirement_snapshots.exists()
+
+    def create_requirement_snapshot(self):
+        if self.has_snapshot():
+            return
+
+        for requirement in self.scholarship.requirements.all():
+            ApplicationRequirementSnapshot.objects.create(
+                application=self,
+                requirement_name=requirement.name
+            )
 
 
 class UploadedDocument(models.Model):
@@ -186,7 +230,6 @@ class Notification(models.Model):
         return f"{self.student.user.username} - {self.title}"
 
 
-
 # Announcement model
 
 class Announcement(models.Model):
@@ -204,3 +247,16 @@ class Announcement(models.Model):
 
     def __str__(self):
         return self.title
+
+
+# Application Snapshot
+class ApplicationRequirementSnapshot(models.Model):
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        related_name='requirement_snapshots'
+    )
+    requirement_name = models.CharField(max_length=150)
+
+    def __str__(self):
+        return f"{self.application} - {self.requirement_name}"

@@ -10,9 +10,13 @@ urlpatterns = [
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
 
+    # Edit Profile
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+
     # Scholarship Info
     path('scholarships/', views.scholarship_list, name='scholarship_list'),
     path('scholarships/<int:scholarship_id>/', views.scholarship_detail, name='scholarship_detail'),
+    path('applications/<int:application_id>/', views.application_detail, name='application_detail'),
 
     # Scholarship Application
     path('scholarships/<int:scholarship_id>/apply/', views.apply_scholarship, name='apply_scholarship'),
@@ -51,4 +55,21 @@ urlpatterns = [
     path('admin-announcements/', views.admin_announcements, name='admin_announcements'),
     path('admin-announcements/create/', views.create_announcement, name='create_announcement'),
     path('admin-announcements/<int:announcement_id>/edit/', views.edit_announcement, name='edit_announcement'),
+
+    # Admin Scholarship Management
+    path('admin-scholarships/', views.admin_scholarships, name='admin_scholarships'),
+    path('admin-scholarships/create/', views.create_scholarship, name='create_scholarship'),
+    path('admin-scholarships/<int:scholarship_id>/edit/', views.edit_scholarship, name='edit_scholarship'),
+
+    # Admin Requirement Management
+    path('admin-scholarships/<int:scholarship_id>/requirements/', views.manage_requirements, name='manage_requirements'),
+    path('admin-scholarships/<int:scholarship_id>/requirements/add/', views.add_requirement, name='add_requirement'),
+    path('requirements/<int:requirement_id>/delete/', views.delete_requirement, 
+    name='delete_requirement'),
+
+    # Withraw application
+    path('applications/<int:application_id>/withdraw/', views.withdraw_application, name='withdraw_application'),
+
+    # Reapply for application
+    path('applications/<int:application_id>/reapply/', views.reapply_application, name='reapply_application'),
 ]

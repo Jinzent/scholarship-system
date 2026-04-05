@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Scholarship</title>
+</head>
+<body>
+    <h1>Edit Scholarship</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'admin_scholarships' %}">Back to Manage Scholarships</a>
+
+    <hr>
+
+    <p><strong>Editing:</strong> {{ scholarship.title }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Update Scholarship</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Application Detail</title>
+</head>
+<body>
+    <h1>Application Detail</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'my_applications' %}">Back to My Applications</a>
+
+    <hr>
+
+    <h2>Scholarship Information</h2>
+    <p><strong>Title:</strong> {{ application.scholarship.title }}</p>
+    <p><strong>Description:</strong> {{ application.scholarship.description }}</p>
+    <p><strong>Minimum GPA:</strong> {{ application.scholarship.min_gpa }}</p>
+    <p><strong>Deadline:</strong> {{ application.scholarship.deadline }}</p>
+
+    <hr>
+
+    <h2>Application Information</h2>
+    <p><strong>Status:</strong> {{ application.status }}</p>
+    <p><strong>Date Applied:</strong> {{ application.applied_at }}</p>
+    <p><strong>Documents Uploaded:</strong> {{ application.uploaded_requirements_count }} / {{ application.total_requirements }}</p>
+
+    {% if application.is_complete %}
+        <p><strong>Document Status:</strong> Complete</p>
+    {% else %}
+        <p><strong>Document Status:</strong> Incomplete</p>
+        <p><strong>Missing Requirements:</strong></p>
+        <ul>
+            {% for requirement in application.missing_requirements %}
+                <li>{{ requirement }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
+    {% if application.can_withdraw %}
+        <form method="post" action="{% url 'withdraw_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit">Withdraw Application</button>
+        </form>
+    {% else %}
+        <p><strong>This application can no longer be withdrawn.</strong></p>
+    {% endif %}
+
+        <hr>
+
+    <h2>Uploaded Documents</h2>
+    {% if documents %}
+        <ul>
+            {% for document in documents %}
+                <li>
+                    {{ document.requirement.name }} -
+                    <a href="{{ document.file.url }}" target="_blank">Open File</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No documents uploaded yet.</p>
+    {% endif %}
+
+    {% if application.can_upload_documents %}
+        <p>
+            <a href="{% url 'upload_documents' application.id %}">Upload / Update Documents</a>
+        </p>
+    {% else %}
+        <p><strong>Document uploads are locked because this application is no longer pending.</strong></p>
+    {% endif %}
+
+    <hr>
+
+    {% if application.can_withdraw %}
+        <form method="post" action="{% url 'withdraw_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit">Withdraw Application</button>
+        </form>
+    {% elif application.can_reapply %}
+        <form method="post" action="{% url 'reapply_application' application.id %}">
+            {% csrf_token %}
+            <button type="submit">Reapply</button>
+        </form>
+    {% else %}
+        <p><strong>This application can no longer be withdrawn or reapplied.</strong></p>
+    {% endif %}
+
+    <hr>
+
+    <h2>Status History</h2>
+    {% if history %}
+        <ul>
+            {% for item in history %}
+                <li>
+                    {{ item.changed_at }} -
+                    {{ item.old_status }} → {{ item.new_status }}
+                    {% if item.changed_by %}
+                        by {{ item.changed_by.username }}
+                    {% else %}
+                        by Unknown User
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No status changes recorded yet.</p>
+    {% endif %}
+</body>
+</html>

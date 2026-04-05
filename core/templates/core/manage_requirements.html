@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Requirements</title>
+</head>
+<body>
+    <h1>Manage Requirements</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p><strong>{{ message }}</strong></p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'admin_scholarships' %}">Back to Manage Scholarships</a>
+
+    <hr>
+
+    <h2>Scholarship</h2>
+    <p><strong>Title:</strong> {{ scholarship.title }}</p>
+    <p><strong>Minimum GPA:</strong> {{ scholarship.min_gpa }}</p>
+    <p><strong>Deadline:</strong> {{ scholarship.deadline }}</p>
+
+    <hr>
+
+    <h2>Add Requirement</h2>
+    <form method="post" action="{% url 'add_requirement' scholarship.id %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Add Requirement</button>
+    </form>
+
+    <hr>
+
+    <h2>Existing Requirements</h2>
+    {% if requirements %}
+        <ul>
+            {% for requirement in requirements %}
+                <li>
+                    {{ requirement.name }}
+                    <form method="post" action="{% url 'delete_requirement' requirement.id %}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit">Delete</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No requirements added yet.</p>
+    {% endif %}
+</body>
+</html>

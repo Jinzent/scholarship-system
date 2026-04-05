@@ -9,6 +9,7 @@ from .models import (
     StudentMessage,
     Notification,
     Announcement,
+    ApplicationRequirementSnapshot,
 )
 
 admin.site.register(StudentProfile)
@@ -18,4 +19,6 @@ admin.site.register(Application)
 admin.site.register(UploadedDocument)
 admin.site.register(ApplicationStatusHistory)
 admin.site.register(StudentMessage)
+admin.site.register(Notification)
 admin.site.register(Announcement)
+admin.site.register(ApplicationRequirementSnapshot)

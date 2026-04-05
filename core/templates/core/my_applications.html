@@ -31,13 +31,33 @@
                     <p><strong>Missing:</strong></p>
                     <ul>
                         {% for requirement in application.missing_requirements %}
-                            <li>{{ requirement.name }}</li>
+                            <li>{{ requirement }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
+                
+                <a href="{% url 'application_detail' application.id %}">View Application Details</a><br>
 
-                <a href="{% url 'upload_documents' application.id %}">Upload Documents</a><br>
-                <a href="{% url 'application_documents' application.id %}">View Uploaded Documents</a>
+                {% if application.can_upload_documents %}
+                    <a href="{% url 'upload_documents' application.id %}">Upload Documents</a><br>
+                    <a href="{% url 'application_documents' application.id %}">View Uploaded Documents</a><br>
+                {% else %}
+                    <a href="{% url 'application_documents' application.id %}">View Uploaded Documents</a><br>
+                    <p><strong>Document uploads are locked because this application is no longer pending.</strong></p>
+                {% endif %}
+
+                {% if application.can_withdraw %}
+                    <form method="post" action="{% url 'withdraw_application' application.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Withdraw Application</button>
+                    </form>
+                {% elif application.can_reapply %}
+                    <form method="post" action="{% url 'reapply_application' application.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Reapply</button>
+                    </form>
+                {% endif %}
+
             </div>
             <hr>
         {% endfor %}

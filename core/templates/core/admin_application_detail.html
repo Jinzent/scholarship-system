@@ -41,7 +41,7 @@
         <p><strong>Missing Requirements:</strong></p>
         <ul>
             {% for requirement in application.missing_requirements %}
-                <li>{{ requirement.name }}</li>
+                <li>{{ requirement }}</li>
             {% endfor %}
         </ul>
     {% endif %}
